@@ -1,0 +1,20 @@
+{
+  "name": "roomos-pro",
+  "version": "2.4.1",
+  "private": true,
+  "description": "RoomOS Pro — Sistema de Reserva de Salas de Reunião",
+  "workspaces": ["frontend", "backend"],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=backend\" \"npm run dev --workspace=frontend\"",
+    "build": "npm run build --workspace=frontend && npm run build --workspace=backend",
+    "start": "npm run start --workspace=backend",
+    "lint": "eslint frontend/src backend/src --ext .js,.jsx,.ts,.tsx"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=9.0.0"
+  }
+}

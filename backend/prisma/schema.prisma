@@ -1,0 +1,148 @@
+// RoomOS Pro — Prisma Schema
+// Database: PostgreSQL 15
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String    @id @default(uuid())
+  name        String
+  email       String    @unique
+  password    String?
+  role        Role      @default(user)
+  dept        String?
+  phone       String?
+  sso         SsoType   @default(local)
+  ssoId       String?
+  notes       String?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  bookings    Booking[]
+  auditLogs   AuditLog[]
+
+  @@map("users")
+}
+
+enum Role {
+  admin
+  manager
+  user
+}
+
+enum SsoType {
+  local
+  google
+  ms365
+  saml
+}
+
+model Room {
+  id               String    @id @default(uuid())
+  name             String
+  floor            String?
+  capacity         Int       @default(10)
+  color            String    @default("#00C2FF")
+  amenities        String[]
+  checkinEnabled   Boolean   @default(true)
+  checkinMethod    CheckinMethod @default(both)
+  autoCancelMin    Int       @default(15)
+  allowLate        Boolean   @default(true)
+  lateWindowMin    Int       @default(10)
+  cancelPolicy     CancelPolicy @default(any)
+  cancelMinBefore  Int       @default(0)
+  maxDurationH     Int       @default(4)
+  requireNote      Boolean   @default(false)
+  overrideGlobal   Boolean   @default(false)
+  posX             Float     @default(50)
+  posY             Float     @default(50)
+  active           Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+
+  bookings         Booking[]
+
+  @@map("rooms")
+}
+
+enum CheckinMethod {
+  qrcode
+  button
+  both
+}
+
+enum CancelPolicy {
+  any
+  manager_only
+  no_cancel
+}
+
+model Booking {
+  id           String        @id @default(uuid())
+  roomId       String
+  userId       String?
+  title        String
+  date         DateTime      @db.Date
+  startTime    String
+  endTime      String
+  status       BookingStatus @default(confirmed)
+  checkinAt    DateTime?
+  notes        String?
+  cancelReason String?
+  cancelledAt  DateTime?
+  createdAt    DateTime      @default(now())
+
+  room         Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([roomId, date])
+  @@index([userId])
+  @@map("bookings")
+}
+
+enum BookingStatus {
+  confirmed
+  cancelled
+  completed
+  no_show
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  detail    String?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@map("audit_logs")
+}
+
+model SystemConfig {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("system_config")
+}
+
+model Webhook {
+  id        String   @id @default(uuid())
+  url       String
+  events    String[]
+  secret    String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@map("webhooks")
+}
